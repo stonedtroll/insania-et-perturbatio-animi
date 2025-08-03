@@ -1,0 +1,132 @@
+.dnd5e2.sheet.actor.character .sheet-body .sidebar .card .meter-group:has(.meter.sectioned.anguish) {
+    padding: 0 0.5rem;
+}
+
+.dnd5e2 .meter-group:has(.meter.sectioned.anguish) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.dnd5e2.sheet.actor.character .meter-group:has(.meter.sectioned.anguish) > .label.roboto-condensed-upper {
+    font-family: var(--dnd5e-font-roboto-condensed, "Roboto Condensed", sans-serif);
+    font-size: var(--font-size-11, 11px);
+    font-weight: bold;
+    text-transform: uppercase;
+    line-height: 1.2;
+    color: var(--color-text-dark-primary, #191813);
+    min-width: fit-content;
+    white-space: nowrap;
+}
+
+.dnd5e2.sheet.actor.character .meter.sectioned.anguish {
+    display: flex;
+    align-items: stretch;
+    height: 32px;
+    border: 1px solid var(--dnd5e-color-olive, #4b4a44);
+    border-radius: 3px;
+    background: var(--dnd5e-color-parchment, #f1ebe8);
+    flex: 1;
+    overflow: hidden;
+}
+
+.dnd5e2 .progress.anguish {
+    position: relative;
+    cursor: pointer;
+    flex: 1;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    height: 100%; 
+    overflow: hidden; 
+}
+
+.dnd5e2 .progress.anguish::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%; 
+    width: var(--bar-percentage, 0%);
+    background: linear-gradient(90deg, 
+        #2C2F33 0%,     
+        #581E1F 50%,    
+        #1A0807 100%   
+    );
+    transition: width 0.3s ease-in-out;
+    z-index: 1;
+    border: none; /* No border */
+    outline: none; /* No outline */
+    box-shadow: none; /* No shadow */
+}
+
+@media (prefers-contrast: high) {
+    .dnd5e2 .progress.anguish::before {
+        background: linear-gradient(90deg, 
+            #1C1F23 0%,     
+            #581E1F 50%,    
+            #1A0807 100%    
+        );
+    }
+}
+
+.dnd5e2 .progress.anguish .label {
+    position: relative;
+    z-index: 2;
+    color: white;
+    text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0 0.5rem;
+    pointer-events: none;
+    width: 100%;
+    justify-content: flex-start;
+    height: 100%;
+}
+
+.dnd5e2 .progress.anguish input[type="text"]:not([hidden]) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0 0.5rem;
+    margin: 0;
+    border: none !important;
+    background: rgba(0, 0, 0, 0.5);
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    color: white;
+    text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+    text-align: left; 
+    z-index: 3;
+    display: block;
+    box-shadow: none !important; 
+}
+
+.dnd5e2.sheet.actor .meter.hit-points:has(.progress.anguish) {
+    overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dnd5e2 .progress.anguish::before {
+        transition: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .dnd5e2.sheet.actor.character .progress.anguish .label {
+        font-size: var(--font-size-12, 12px);
+    }
+    
+    .dnd5e2.sheet.actor.character .progress.anguish input[type="text"] {
+        font-size: var(--font-size-12, 12px);
+    }
+}
+
+.dnd5e2 .meter-group:has(.meter.sectioned.anguish) {
+    position: relative;
+    z-index: 1;
+}

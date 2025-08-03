@@ -1,0 +1,265 @@
+/**
+ * Insania et Perturbatio Animi Module
+ */
+
+import type { InsaniaEtPerturbatioAnimiApplication } from './application/InsaniaEtPerturbatioAnimiApplication.js';
+import type { OverlayRegistry } from './application/registries/OverlayRegistry.js';
+import type { EventBus } from './infrastructure/events/EventBus.js';
+import type { KeyboardHandler } from './infrastructure/input/KeyboardHandler.js';
+
+import { MODULE_ID, SETTINGS } from './config.js';
+import { DIContainer } from './infrastructure/di/DIContainer.js';
+import { registerSettings, getLogLevelFromString } from './settings.js';
+import { LogLevel, LoggerFactory, SolarisedColours, type FoundryLogger } from '../lib/log4foundry/log4foundry.js';
+import { AbstractDomainEvent } from './domain/events/AbstractDomainEvent.js';
+import type { IdGenerator } from './domain/services/IdGenerator.js';
+
+const moduleState = {
+  logger: null as FoundryLogger | null,
+  container: null as DIContainer | null,
+  application: null as InsaniaEtPerturbatioAnimiApplication | null,
+  isInitialised: false,
+  isReady: false
+};
+
+// Module lifecycle hooks with error boundary
+Hooks.once('init', async () => {
+  try {
+    await initialiseModule();
+  } catch (error) {
+    console.error(`${MODULE_ID} | Critical initialisation error:`, error);
+    ui.notifications?.error('Insania et Perturbatio Animi failed to initialise');
+  }
+});
+
+Hooks.once('ready', async () => {
+  try {
+    await startApplication();
+  } catch (error) {
+    console.error(`${MODULE_ID} | Critical startup error:`, error);
+    ui.notifications?.error('Insania et Perturbatio Animi failed to start');
+  }
+});
+
+/**
+ * Initialise the module during Foundry's init phase
+ * Sets up logging, settings, and dependency injection
+ */
+async function initialiseModule(): Promise<void> {
+  console.log(`${MODULE_ID} | Initialising Insania et Perturbatio Animi`);
+
+  // Register module settings first
+  registerSettings();
+
+  // Configure logging based on saved settings
+  const logLevel = getConfiguredLogLevel();
+  moduleState.logger = configureLogging(logLevel);
+
+  // Create and initialise dependency container
+  moduleState.container = new DIContainer();
+
+  try {
+    await moduleState.container.initialise();
+
+    const keyboardHandler = moduleState.container.get<KeyboardHandler>('keyboardHandler');
+    if (keyboardHandler) {
+      keyboardHandler.registerKeybindings();
+      moduleState.logger.debug('Keybindings registered during init');
+    } else {
+      moduleState.logger.warn('KeyboardHandler not available for keybinding registration');
+    }
+
+    // Configure domain events with ID generator
+    const idGenerator = moduleState.container.get<IdGenerator>('idGenerator');
+    if (idGenerator) {
+      AbstractDomainEvent.configureIdGenerator(idGenerator);
+      moduleState.logger.debug('Domain events configured with ID generator');
+    }
+
+    moduleState.isInitialised = true;
+    moduleState.logger.info('Module initialised successfully');
+  } catch (error) {
+    moduleState.logger?.error('Failed to initialise module', error);
+    throw error;
+  }
+}
+
+/**
+ * Start the application when Foundry is ready
+ * Creates the main application and enables debug mode if configured
+ */
+async function startApplication(): Promise<void> {
+  if (!moduleState.isInitialised || !moduleState.logger || !moduleState.container) {
+    console.error(`${MODULE_ID} | Cannot start application - module not properly initialised`);
+    ui.notifications?.error('Insania et Perturbatio Animi not properly initialised');
+    return;
+  }
+
+  moduleState.logger.info('Game ready, setting up Insania et Perturbatio Animi');
+
+  try {
+    // Create and initialise the application
+    moduleState.application = moduleState.container.createApplication();
+    await moduleState.application.initialise();
+
+    // Enable debug mode if log level is DEBUG
+    if (isDebugMode()) {
+      enableDebugMode();
+    }
+
+    moduleState.isReady = true;
+    moduleState.logger.info('Insania et Perturbatio Animi setup complete');
+
+  } catch (error) {
+    moduleState.logger.error('Failed to initialise Insania et Perturbatio Animi Application', error);
+    ui.notifications?.error('Failed to start Insania et Perturbatio Animi');
+    throw error;
+  }
+}
+
+/**
+ * Clean up resources when closing the game
+ * Ensures proper teardown of application and container
+ * Optimised for clean shutdown without memory leaks
+ */
+async function teardownModule(): Promise<void> {
+  if (moduleState.logger) {
+    moduleState.logger.info('Closing game, tearing down Insania et Perturbatio Animi');
+  }
+
+  try {
+    if (moduleState.application) {
+      await moduleState.application.tearDown();
+      moduleState.application = null;
+    }
+
+    if (moduleState.container) {
+      await moduleState.container.shutdown();
+      moduleState.container = null;
+    }
+
+    // Clean up debug objects
+    if ((window as any).insaniaEtPerturbatioAnimiDebug) {
+      delete (window as any).insaniaEtPerturbatioAnimiDebug;
+    }
+
+    // Reset state
+    moduleState.isInitialised = false;
+    moduleState.isReady = false;
+
+    if (moduleState.logger) {
+      moduleState.logger.info('Insania et Perturbatio Animi teardown complete');
+      moduleState.logger = null;
+    }
+
+  } catch (error) {
+    console.error(`${MODULE_ID} | Error during teardown:`, error);
+  }
+}
+
+/**
+ * Get the configured log level from settings
+ * Defaults to INFO if not set or if game not ready
+ * Optimised with safe fallback for early access
+ */
+function getConfiguredLogLevel(): LogLevel {
+  try {
+    if (game?.settings) {
+      const savedLogLevel = game.settings.get(MODULE_ID, SETTINGS.LOG_LEVEL) as string;
+      return savedLogLevel ? getLogLevelFromString(savedLogLevel) : LogLevel.INFO;
+    }
+  } catch (error) {
+    console.warn(`${MODULE_ID} | Could not read log level setting, using INFO`);
+  }
+
+  return LogLevel.INFO;
+}
+
+/**
+ * Configure the logging system with the specified level
+ * Returns the configured logger instance
+ * Optimised for Foundry VTT v13 logging patterns
+ */
+function configureLogging(logLevel: LogLevel): FoundryLogger {
+  const factory = LoggerFactory.getInstance();
+  factory.setDefaultLevel(logLevel);
+  factory.setDefaultColour(SolarisedColours.RED);
+
+  return factory.getFoundryLogger(MODULE_ID, {
+    level: logLevel,
+    useFoundryPrefix: true
+  });
+}
+
+/**
+ * Check if the module is running in debug mode
+ * Based on the configured log level with safe fallback
+ * Optimised for performance with early return
+ */
+function isDebugMode(): boolean {
+  try {
+    const logLevel = getConfiguredLogLevel();
+    return logLevel === LogLevel.DEBUG;
+  } catch (error) {
+    return false; // Safe fallback
+  }
+}
+
+/**
+ * Enable debug mode with development utilities
+ * Exposes debug tools on the window object
+ * Optimised for development workflow with Foundry VTT v13
+ */
+function enableDebugMode(): void {
+  if (!moduleState.container || !moduleState.logger) {
+    console.warn(`${MODULE_ID} | Cannot enable debug mode - dependencies not ready`);
+    return;
+  }
+
+  try {
+    const overlayRegistry = moduleState.container.get<OverlayRegistry>('overlayRegistry');
+    const eventBus = moduleState.container.get<EventBus>('eventBus');
+
+    (window as any).insaniaEtPerturbatioAnimiDebug = {
+      // Core module components
+      logger: () => moduleState.logger,
+      container: () => moduleState.container,
+      application: () => moduleState.application,
+
+      // Debug utilities
+      listOverlays: () => overlayRegistry?.getAll(),
+      getOverlay: (id: string) => overlayRegistry?.get(id),
+      eventBus: () => eventBus,
+
+      // Diagnostic tools
+      getStats: () => ({
+        overlays: overlayRegistry?.getAll().length ?? 0,
+        logLevel: LogLevel[getConfiguredLogLevel()],
+        isInitialised: moduleState.isInitialised,
+        isReady: moduleState.isReady
+      }),
+
+      // Development utilities
+      reinitialise: async () => {
+        console.log(`${MODULE_ID} | Reinitialising for development...`);
+        await teardownModule();
+        await initialiseModule();
+        await startApplication();
+        return 'Reinitialisation complete';
+      }
+    };
+
+    console.log(`${MODULE_ID} | Debug mode enabled`);
+    console.log('  Access debug tools via: window.insaniaEtPerturbatioAnimiDebug');
+    console.log('  Available commands:');
+    console.log('    - insaniaEtPerturbatioAnimiDebug.getAPI()');
+    console.log('    - insaniaEtPerturbatioAnimiDebug.listOverlays()');
+    console.log('    - insaniaEtPerturbatioAnimiDebug.getStats()');
+    console.log('    - insaniaEtPerturbatioAnimiDebug.reinitialise()');
+
+  } catch (error) {
+    if (moduleState.logger) {
+      moduleState.logger.error('Failed to enable debug mode', error);
+    }
+  }
+}
