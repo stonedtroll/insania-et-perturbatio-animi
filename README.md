@@ -14,6 +14,7 @@ A Foundry VTT module that weaves a bit of anguish, fear and madness into your D&
 ## Features
 
 ### Anguish
+The maximum Anguish for a character is 20 × their Sanity score (or 20 × their Wisdom score if they have no Sanity).
 - **Anguish Arc**: A visual gauge of an actor’s current anguish. 
 
 <p align=center>
