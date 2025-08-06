@@ -15,14 +15,23 @@ A Foundry VTT module that weaves a bit of anguish, fear and madness into your D&
 
 ### Anguish
 - **Anguish Arc**: A visual gauge of an actor’s current anguish. 
+
+<p align=center>
+    <img  alt="Anguish Bar" src="assets/images/documentation/anguish-arc.png">
+</p>
+
 - **Anguish Bar**: An editable bar on the character sheet
+
+<p align=center>
+    <img  alt="Anguish Bar" src="assets/images/documentation/anguis-bar.png">
+</p>
 
 ## Usage
 - **Hold M**: to reveal the Anguish Arc for all tokens you own.
 
 ## Suggested Module
 - Maleficar Manoeuvres: https://github.com/stonedtroll/maleficar-manoeuvres
-- nShadows & Secrets: https://github.com/stonedtroll/shadows-and-secrets
+- Shadows & Secrets: https://github.com/stonedtroll/shadows-and-secrets
 
 <p align=right>
     <img  alt="GitHub Downloads (specific asset, all releases)" src="https://img.shields.io/github/downloads/stonedtroll/insania-et-perturbatio-animi/module.zip?style=for-the-badge&labelColor=2A2D34&color=8C2E2E">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img alt="GitHub Downloads (specific asset, latest release)" src="https://img.shields.io/github/downloads/stonedtroll/insania-et-perturbatio-animi/latest/module.zip?style=for-the-badge&labelColor=2A2D34&color=D97D26">
