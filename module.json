@@ -2,7 +2,7 @@
   "id": "insania-et-perturbatio-animi",
   "title": "Insania et Perturbatio Animi",
   "description": "A Foundry VTT add-on that deepens immersion by presenting live, context-sensitive environmental details through each character's perspective.",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0",
   "compatibility": {
     "minimum": "13",
     "verified": "13.346",
